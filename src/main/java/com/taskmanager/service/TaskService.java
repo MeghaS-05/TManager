@@ -4,12 +4,16 @@ import com.taskmanager.dto.TaskRequest;
 import com.taskmanager.dto.TaskResponse;
 import com.taskmanager.exception.ResourceNotFoundException;
 import com.taskmanager.model.Task;
+import com.taskmanager.model.TaskStatus;
 import com.taskmanager.model.User;
 import com.taskmanager.repository.TaskRepository;
 import com.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import com.taskmanager.model.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -40,13 +44,18 @@ public class TaskService {
         return toResponse(saved);
     }
 
-    public List<TaskResponse> getAllTasksForUser(String username) {
-        User user = getUserByUsername(username);
-        return taskRepository.findByUserId(user.getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<TaskResponse> getAllTasksForUser(String username, TaskStatus status, Pageable pageable) {
+    User user = getUserByUsername(username);
+
+    Page<Task> tasks;
+    if (status != null) {
+        tasks = taskRepository.findByUserIdAndStatus(user.getId(), status, pageable);
+    } else {
+        tasks = taskRepository.findByUserId(user.getId(), pageable);
     }
+
+    return tasks.map(this::toResponse);
+}
 
     public TaskResponse getTaskById(Long taskId, String username) {
         Task task = getOwnedTask(taskId, username);

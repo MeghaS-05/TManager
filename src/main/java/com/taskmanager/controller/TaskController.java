@@ -2,13 +2,21 @@ package com.taskmanager.controller;
 
 import com.taskmanager.dto.TaskRequest;
 import com.taskmanager.dto.TaskResponse;
+import com.taskmanager.model.TaskStatus;
 import com.taskmanager.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import com.taskmanager.model.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
 import java.util.List;
 
@@ -28,11 +36,15 @@ public class TaskController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @GetMapping
-    public ResponseEntity<List<TaskResponse>> getAllTasks(Authentication authentication) {
-        List<TaskResponse> tasks = taskService.getAllTasksForUser(authentication.getName());
-        return ResponseEntity.ok(tasks);
-    }
+   @GetMapping
+public ResponseEntity<Page<TaskResponse>> getAllTasks(
+        @RequestParam(required = false) TaskStatus status,
+        @PageableDefault(size = 10, sort = "dueDate") Pageable pageable,
+        Authentication authentication
+) {
+    Page<TaskResponse> tasks = taskService.getAllTasksForUser(authentication.getName(), status, pageable);
+    return ResponseEntity.ok(tasks);
+}
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponse> getTaskById(
